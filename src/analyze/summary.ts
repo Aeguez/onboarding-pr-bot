@@ -4,10 +4,12 @@ import { createHealthSnapshot, type HealthSnapshot } from "./health";
 import { detectStack, type DetectedTechnology } from "./detectStack";
 import { getAvailableScripts, readPackageJson, type PackageJsonFacts } from "./scripts";
 import { pathExists, walkRepository, type TreeEntry } from "../repo/walk";
+import { analyzeTsConfig, type TsConfigFacts } from "./tsconfig";
 
 export type RepositoryFacts = {
   repositoryPath: string;
   packageJson: PackageJsonFacts | null;
+  tsconfig: TsConfigFacts;
   technologies: DetectedTechnology[];
   scripts: string[];
   entryPoints: string[];
@@ -35,6 +37,7 @@ export async function analyzeRepository(rootDir: string): Promise<RepositoryFact
   return {
     repositoryPath,
     packageJson,
+    tsconfig: await analyzeTsConfig(repositoryPath),
     technologies: detectStack(packageJson),
     scripts: getAvailableScripts(packageJson),
     entryPoints,

@@ -2,12 +2,27 @@ import express from "express";
 import dotenv from "dotenv";
 import { analyzeRepository } from "./analyze/summary";
 import { renderOnboardingMarkdown } from "./generate/render";
+import { writeGeneratedDocs } from "./generate/writeDocs";
 
 dotenv.config();
 
 const app = express();
 
 app.use(express.json());
+
+app.post("/api/generate-local-docs", async(_req, res, next) => {
+  try {
+    const facts = await analyzeRepository(process.cwd());
+    const result = await writeGeneratedDocs(process.cwd(), facts);
+
+    res.status(201).json({
+      ok: true,
+      generatedFiles: result.files,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 app.post("/api/webhook", async (req, res, next) => {
   try {

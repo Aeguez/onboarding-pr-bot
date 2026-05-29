@@ -21,6 +21,7 @@ const knownPackages: Array<Omit<DetectedTechnology, "version">> = [
   { name: "Prisma", packageName: "prisma", category: "database" },
   { name: "Mongoose", packageName: "mongoose", category: "database" },
   { name: "dotenv", packageName: "dotenv", category: "tooling" },
+  {name: "ESLint", packageName: "eslint", category:"tooling"},
 ];
 
 export function detectStack(packageJson: PackageJsonFacts | null): DetectedTechnology[] {
