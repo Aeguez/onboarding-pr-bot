@@ -10,6 +10,7 @@ import {
   detectPackageManager,
   type PackageManagerFacts,
 } from "./packageManager";
+import { analyzeImports, type ImportFacts } from "./imports";
 
 export type RepositoryFacts = {
   repositoryPath: string;
@@ -20,6 +21,7 @@ export type RepositoryFacts = {
   scripts: string[];
   entryPoints: string[];
   structure: TreeEntry[];
+  imports: ImportFacts[];
   environment: EnvFacts;
   health: HealthSnapshot;
   workflows: WorkflowFacts;
@@ -50,6 +52,7 @@ export async function analyzeRepository(rootDir: string): Promise<RepositoryFact
     scripts: getAvailableScripts(packageJson),
     entryPoints,
     structure: await walkRepository(repositoryPath),
+    imports: await analyzeImports(repositoryPath),
     environment: await analyzeEnvironment(repositoryPath),
     health: await createHealthSnapshot(repositoryPath, packageJson),
     workflows: await analyzeWorkflows(repositoryPath),

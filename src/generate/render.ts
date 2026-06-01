@@ -39,6 +39,10 @@ export function renderCodemapMarkdown(facts: RepositoryFacts): string {
     "| Path | What it indicates |",
     "| --- | --- |",
     ...renderCodemapRows(facts),
+    "",
+    "## Internal Imports",
+    "",
+    ...renderImportRows(facts),
   ];
 
   return `${lines.join("\n")}\n`;
@@ -121,6 +125,16 @@ function renderCodemapRows(facts: RepositoryFacts): string[] {
     .map((entry) => `| \`${entry.path}\` | ${describePath(entry)} |`);
 
   return rows.length ? rows : ["| not detected | No src or app directory was found. |"];
+}
+
+function renderImportRows(facts: RepositoryFacts): string[] {
+  if (!facts.imports.length) {
+    return ["No internal imports were detected."];
+  }
+
+  return facts.imports.map(
+    (entry) => `- \`${entry.file}\` imports ${entry.imports.map((importPath) => `\`${importPath}\``).join(", ")}`,
+  );
 }
 
 function isLikelyImportantFile(entry: TreeEntry): boolean {
