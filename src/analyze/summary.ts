@@ -5,10 +5,16 @@ import { detectStack, type DetectedTechnology } from "./detectStack";
 import { getAvailableScripts, readPackageJson, type PackageJsonFacts } from "./scripts";
 import { pathExists, walkRepository, type TreeEntry } from "../repo/walk";
 import { analyzeTsConfig, type TsConfigFacts } from "./tsconfig";
+import { analyzeWorkflows, type WorkflowFacts } from "./workflows";
+import {
+  detectPackageManager,
+  type PackageManagerFacts,
+} from "./packageManager";
 
 export type RepositoryFacts = {
   repositoryPath: string;
   packageJson: PackageJsonFacts | null;
+  packageManager: PackageManagerFacts;
   tsconfig: TsConfigFacts;
   technologies: DetectedTechnology[];
   scripts: string[];
@@ -16,6 +22,7 @@ export type RepositoryFacts = {
   structure: TreeEntry[];
   environment: EnvFacts;
   health: HealthSnapshot;
+  workflows: WorkflowFacts;
 };
 
 const entryPointCandidates = [
@@ -37,13 +44,15 @@ export async function analyzeRepository(rootDir: string): Promise<RepositoryFact
   return {
     repositoryPath,
     packageJson,
+    packageManager: await detectPackageManager(repositoryPath),
     tsconfig: await analyzeTsConfig(repositoryPath),
     technologies: detectStack(packageJson),
     scripts: getAvailableScripts(packageJson),
     entryPoints,
     structure: await walkRepository(repositoryPath),
     environment: await analyzeEnvironment(repositoryPath),
-    health: createHealthSnapshot(packageJson),
+    health: await createHealthSnapshot(repositoryPath, packageJson),
+    workflows: await analyzeWorkflows(repositoryPath),
   };
 }
 

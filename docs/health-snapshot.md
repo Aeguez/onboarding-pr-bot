@@ -8,12 +8,33 @@ Generated from package metadata and configuration files.
 - Test script: missing or placeholder
 - Lint script: missing
 
+## Repository Hygiene
+
+- README: present
+- LICENSE: present
+- .gitignore: present
+- .env.example: present
+- CODEOWNERS: missing
+
+## README Quality
+
+- README: present
+- Length: 302 characters
+- Mentions install: no
+- Mentions tests: no
+- Mentions environment variables: no
+
+## CI
+
+- GitHub Actions workflows: missing
+- Workflow files: none detected
+
 ## TypeScript
 
 - tsconfig.json: present
 - Strict mode: true
 - Target: ES2020
-- Module: CommonJS
+- Module: NodeNext
 - rootDir: ./src
 - outDir: ./dist
 
@@ -26,3 +47,6 @@ Generated from package metadata and configuration files.
 
 - The test script is still the default npm placeholder.
 - No lint script was found.
+- README exists but appears short.
+- README does not mention how to run tests.
+- README does not mention required environment variables.

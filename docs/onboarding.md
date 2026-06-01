@@ -6,6 +6,7 @@ Generated from static repository facts. No source code was executed.
 
 - Package: onboarding-pr-bot
 - Version: 1.0.0
+- Package manager: npm (package-lock.json)
 - Description: Onboarding PR Bot is a GitHub App that analyzes JavaScript/TypeScript repositories and automatically opens a conservative Pull Request with onboarding documentation, a CODEMAP, and a health snapshot — generated strictly from verified repository facts
 - Entry points: src/index.ts, src/app.ts
 
