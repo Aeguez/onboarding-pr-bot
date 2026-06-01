@@ -34,14 +34,18 @@ const entryPointCandidates = [
   "src/main.tsx",
   "src/app.ts",
   "src/server.ts",
+  "index.js",
+  "server.js",
   "app/index.ts",
   "app/page.tsx",
+  "pages/index.tsx",
+  "src/pages/index.tsx",
 ];
 
 export async function analyzeRepository(rootDir: string): Promise<RepositoryFacts> {
   const repositoryPath = path.resolve(rootDir);
   const packageJson = await readPackageJson(repositoryPath);
-  const entryPoints = await findEntryPoints(repositoryPath);
+  const entryPoints = await findEntryPoints(repositoryPath, packageJson);
 
   return {
     repositoryPath,
@@ -59,14 +63,30 @@ export async function analyzeRepository(rootDir: string): Promise<RepositoryFact
   };
 }
 
-async function findEntryPoints(rootDir: string): Promise<string[]> {
-  const matches: string[] = [];
+async function findEntryPoints(
+  rootDir: string,
+  packageJson: PackageJsonFacts | null,
+): Promise<string[]> {
+  const matches = new Set<string>();
+
+  if (packageJson?.main) {
+    matches.add(packageJson.main);
+  }
+
+  const scripts = packageJson?.scripts ?? {};
+  const scriptText = [scripts.dev, scripts.start].filter(Boolean).join(" ");
 
   for (const candidate of entryPointCandidates) {
-    if (await pathExists(path.join(rootDir, candidate))) {
-      matches.push(candidate);
+    if (scriptText.includes(candidate)) {
+      matches.add(candidate);
     }
   }
 
-  return matches;
+  for (const candidate of entryPointCandidates) {
+    if (await pathExists(path.join(rootDir, candidate))) {
+      matches.add(candidate);
+    }
+  }
+
+  return [...matches];
 }
