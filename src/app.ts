@@ -1,3 +1,6 @@
+import { rm } from "node:fs/promises";
+import { createInstallationAccessToken } from "./github/auth";
+import { cloneRepositoryToTempDir } from "./repo/clone";
 import express from "express";
 import dotenv from "dotenv";
 import { analyzeRepository } from "./analyze/summary";
@@ -21,21 +24,9 @@ app.use(
   }),
 );
 
-app.post("/api/generate-local-docs", async (_req, res, next) => {
-  try {
-    const facts = await analyzeRepository(process.cwd());
-    const result = await writeGeneratedDocs(process.cwd(), facts);
-
-    res.status(201).json({
-      ok: true,
-      generatedFiles: result.files,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
 app.post("/api/webhook", async (req, res, next) => {
+  let repoPath: string | undefined;
+
   try {
     const rawBody = (req as RequestWithRawBody).rawBody;
     const signature = req.header("x-hub-signature-256");
@@ -73,7 +64,18 @@ app.post("/api/webhook", async (req, res, next) => {
       repo,
     });
 
-    const facts = await analyzeRepository(process.cwd());
+    const token = await createInstallationAccessToken();
+
+    const clonedRepoPath = await cloneRepositoryToTempDir({
+    owner,
+    repo,
+    token,
+  });
+
+    repoPath = clonedRepoPath;
+
+    const facts = await analyzeRepository(clonedRepoPath);
+    const result = await writeGeneratedDocs(clonedRepoPath, facts);
 
     res.status(200).json({
       ok: true,
@@ -81,6 +83,7 @@ app.post("/api/webhook", async (req, res, next) => {
       delivery,
       owner,
       repo,
+      generatedFiles: result.files,
       package: facts.packageJson?.name,
       detectedTechnologies: facts.technologies.map((tech) => tech.name),
       entryPoints: facts.entryPoints,
@@ -88,6 +91,10 @@ app.post("/api/webhook", async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  } finally {
+    if (repoPath) {
+      await rm(repoPath, { recursive: true, force: true });
+    }
   }
 });
 

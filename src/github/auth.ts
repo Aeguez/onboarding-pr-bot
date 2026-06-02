@@ -1,6 +1,10 @@
 import { Octokit } from "octokit";
 import { createAppAuth } from "@octokit/auth-app";
 
+type InstallationAuthResult = {
+  token: string;
+};
+
 export type GitHubAppAuthConfig = {
     appId: string;
     privateKey: string;
@@ -32,4 +36,28 @@ export function getGitHubAppAuthConfigFromEnv(): GitHubAppAuthConfig {
     privateKey: privateKey.replace(/\\n/g, "\n"),
     installationId,
   };
+}
+
+export async function createInstallationAccessToken(): Promise<string> {
+  const octokit = createInstallationOctokit(getGitHubAppAuthConfigFromEnv());
+
+  const auth = await octokit.auth({
+    type: "installation",
+  });
+
+  if (!isInstallationAuthResult(auth)) {
+    throw new Error("GitHub App authentication did not return an installation token.");
+  }
+
+  return auth.token;
+}
+
+function isInstallationAuthResult(value: unknown): value is InstallationAuthResult {
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        "token" in value &&
+        typeof value.token === "string"
+    )
+
 }
