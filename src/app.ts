@@ -1,5 +1,6 @@
 import { rm } from "node:fs/promises";
 import { createInstallationAccessToken } from "./github/auth";
+import { publishOnboardingPullRequest } from "./github/prPublisher";
 import { cloneRepositoryToTempDir } from "./repo/clone";
 import express from "express";
 import dotenv from "dotenv";
@@ -44,9 +45,19 @@ app.post("/api/webhook", async (req, res, next) => {
 
     const event = req.header("x-github-event");
     const delivery = req.header("x-github-delivery");
+
+    if (!event || !isSupportedWebhookEvent(event)) {
+      res.status(202).json({
+        ok: true,
+        ignored: true,
+        event,
+      });
+      return;
+    }
+
     const repository = req.body.repository;
 
-    if (!repository?.owner?.login || !repository?.name) {
+    if (!repository?.owner?.login || !repository?.name || !repository?.default_branch) {
       res.status(400).json({
         ok: false,
         error: "Webhook payload is missing repository information",
@@ -56,6 +67,10 @@ app.post("/api/webhook", async (req, res, next) => {
 
     const owner = repository.owner.login;
     const repo = repository.name;
+    const defaultBranch = repository.default_branch;
+    const installationId = req.body.installation?.id
+      ? String(req.body.installation.id)
+      : undefined;
 
     console.log("Webhook received:", {
       event,
@@ -64,18 +79,26 @@ app.post("/api/webhook", async (req, res, next) => {
       repo,
     });
 
-    const token = await createInstallationAccessToken();
+    const token = await createInstallationAccessToken(installationId);
 
     const clonedRepoPath = await cloneRepositoryToTempDir({
-    owner,
-    repo,
-    token,
-  });
+      owner,
+      repo,
+      token,
+    });
 
     repoPath = clonedRepoPath;
 
     const facts = await analyzeRepository(clonedRepoPath);
     const result = await writeGeneratedDocs(clonedRepoPath, facts);
+    const pullRequest = await publishOnboardingPullRequest({
+      owner,
+      repo,
+      repoPath: clonedRepoPath,
+      token,
+      defaultBranch,
+      files: result.files,
+    });
 
     res.status(200).json({
       ok: true,
@@ -84,6 +107,7 @@ app.post("/api/webhook", async (req, res, next) => {
       owner,
       repo,
       generatedFiles: result.files,
+      pullRequest,
       package: facts.packageJson?.name,
       detectedTechnologies: facts.technologies.map((tech) => tech.name),
       entryPoints: facts.entryPoints,
@@ -97,6 +121,10 @@ app.post("/api/webhook", async (req, res, next) => {
     }
   }
 });
+
+function isSupportedWebhookEvent(event: string): boolean {
+  return event === "push" || event === "repository";
+}
 
 app.get("/api/analyze-local", async (_req, res, next) => {
   try {

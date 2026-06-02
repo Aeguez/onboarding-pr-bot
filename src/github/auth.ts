@@ -6,26 +6,28 @@ type InstallationAuthResult = {
 };
 
 export type GitHubAppAuthConfig = {
-    appId: string;
-    privateKey: string;
-    installationId: string;
+  appId: string;
+  privateKey: string;
+  installationId: string;
 };
 
 export function createInstallationOctokit(config: GitHubAppAuthConfig): Octokit {
-    return new Octokit({
-        authStrategy: createAppAuth,
-        auth: {
-            appID: config.appId,
-            privateKey: config.privateKey,
-            installationId: config.installationId,
-        },
-    });
+  return new Octokit({
+    authStrategy: createAppAuth,
+    auth: {
+      appId: config.appId,
+      privateKey: config.privateKey,
+      installationId: config.installationId,
+    },
+  });
 }
 
-export function getGitHubAppAuthConfigFromEnv(): GitHubAppAuthConfig {
+export function getGitHubAppAuthConfigFromEnv(
+  installationIdOverride?: string,
+): GitHubAppAuthConfig {
   const appId = process.env.APP_ID;
   const privateKey = process.env.PRIVATE_KEY;
-  const installationId = process.env.INSTALLATION_ID;
+  const installationId = installationIdOverride ?? process.env.INSTALLATION_ID;
 
   if (!appId || !privateKey || !installationId) {
     throw new Error("Missing GitHub App authentication environment variables.");
@@ -38,8 +40,12 @@ export function getGitHubAppAuthConfigFromEnv(): GitHubAppAuthConfig {
   };
 }
 
-export async function createInstallationAccessToken(): Promise<string> {
-  const octokit = createInstallationOctokit(getGitHubAppAuthConfigFromEnv());
+export async function createInstallationAccessToken(
+  installationId?: string,
+): Promise<string> {
+  const octokit = createInstallationOctokit(
+    getGitHubAppAuthConfigFromEnv(installationId),
+  );
 
   const auth = await octokit.auth({
     type: "installation",
@@ -53,11 +59,10 @@ export async function createInstallationAccessToken(): Promise<string> {
 }
 
 function isInstallationAuthResult(value: unknown): value is InstallationAuthResult {
-    return (
-        typeof value === "object" &&
-        value !== null &&
-        "token" in value &&
-        typeof value.token === "string"
-    )
-
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "token" in value &&
+    typeof value.token === "string"
+  );
 }
