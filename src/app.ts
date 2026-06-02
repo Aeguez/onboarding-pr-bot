@@ -7,17 +7,21 @@ import { verifyGitHubWebhookSignature } from "./github/webhookSecurity";
 
 dotenv.config();
 
+type RequestWithRawBody = express.Request & {
+  rawBody?: Buffer;
+};
+
 const app = express();
 
 app.use(
   express.json({
     verify: (req, _res, buf) => {
-      (req as express.Request & { rawBody?: Buffer }).rawBody = Buffer.from(buf);
-    }
-  }
-  ));
+      (req as RequestWithRawBody).rawBody = Buffer.from(buf);
+    },
+  }),
+);
 
-app.post("/api/generate-local-docs", async(_req, res, next) => {
+app.post("/api/generate-local-docs", async (_req, res, next) => {
   try {
     const facts = await analyzeRepository(process.cwd());
     const result = await writeGeneratedDocs(process.cwd(), facts);
@@ -32,43 +36,61 @@ app.post("/api/generate-local-docs", async(_req, res, next) => {
 });
 
 app.post("/api/webhook", async (req, res, next) => {
-  try{
-  const rawBody = (req as express.Request & { rawBody?: Buffer }).rawBody;
-  const signature = req.header("x-hub-signature-256");
+  try {
+    const rawBody = (req as RequestWithRawBody).rawBody;
+    const signature = req.header("x-hub-signature-256");
 
-  if(
-    !rawBody ||
-    !verifyGitHubWebhookSignature(rawBody, signature, process.env.WEBHOOK_SECRET)
-  ) {
-    res.status(401).json({
-      ok: false,
-      error: "Invalid webhook signature",
+    if (
+      !rawBody ||
+      !verifyGitHubWebhookSignature(rawBody, signature, process.env.WEBHOOK_SECRET)
+    ) {
+      res.status(401).json({
+        ok: false,
+        error: "Invalid webhook signature",
+      });
+      return;
+    }
+
+    const event = req.header("x-github-event");
+    const delivery = req.header("x-github-delivery");
+    const repository = req.body.repository;
+
+    if (!repository?.owner?.login || !repository?.name) {
+      res.status(400).json({
+        ok: false,
+        error: "Webhook payload is missing repository information",
+      });
+      return;
+    }
+
+    const owner = repository.owner.login;
+    const repo = repository.name;
+
+    console.log("Webhook received:", {
+      event,
+      delivery,
+      owner,
+      repo,
     });
-    return;
-  }
-  
-  const event = req.header("x-github-event");
-  const delivery = req.header("x-github-delivery");
 
-  console.log("Webhook received:", { event, delivery });
+    const facts = await analyzeRepository(process.cwd());
 
-  const facts = await analyzeRepository(process.cwd());
-
-  
-  res.status(200).json({
-    ok: true,
-    event,
-    delivery,
-    package: facts.packageJson?.name,
-    detectedTechnologies: facts.technologies.map((tech) => tech.name),
-    entryPoints: facts.entryPoints,
-    health: facts.health,
-  });
-} catch (error) {
-  next(error);
+    res.status(200).json({
+      ok: true,
+      event,
+      delivery,
+      owner,
+      repo,
+      package: facts.packageJson?.name,
+      detectedTechnologies: facts.technologies.map((tech) => tech.name),
+      entryPoints: facts.entryPoints,
+      health: facts.health,
+    });
+  } catch (error) {
+    next(error);
   }
 });
-  
+
 app.get("/api/analyze-local", async (_req, res, next) => {
   try {
     const facts = await analyzeRepository(process.cwd());
