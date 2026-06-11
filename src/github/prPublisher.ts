@@ -41,7 +41,7 @@ export async function publishOnboardingPullRequest(
   }
 
   await git(options.repoPath, ["commit", "-m", "Add onboarding documentation"]);
-  await git(options.repoPath, ["push", "--force-with-lease", "origin", docsBranchName]);
+  await git(options.repoPath, ["push", "--force", "origin", docsBranchName]);
 
   const octokit = new Octokit({ auth: options.token });
   const existingPullRequestUrl = await findExistingPullRequestUrl(octokit, options);
