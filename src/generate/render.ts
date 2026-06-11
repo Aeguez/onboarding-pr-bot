@@ -190,7 +190,7 @@ function describePath(entry: TreeEntry): string {
     return  "Runtime configuration and app defaults.";
   }
 
-  if (entry.path.endsWith("/tests") || entry.path.endsWith("/_tests_")) {
+  if (entry.path.endsWith("/tests") || entry.path.endsWith("/__tests__")) {
     return "Automated test files.";
   }
 

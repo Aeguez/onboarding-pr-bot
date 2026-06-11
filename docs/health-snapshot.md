@@ -41,7 +41,7 @@ Generated from package metadata and configuration files.
 ## Environment
 
 - Environment examples: .env.example
-- Environment variables: PORT, WEBHOOK_SECRET
+- Environment variables: APP_ID, INSTALLATION_ID, PORT, PRIVATE_KEY, WEBHOOK_SECRET
 
 ### Health Notes
 

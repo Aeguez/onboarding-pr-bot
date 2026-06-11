@@ -25,7 +25,7 @@ Generated from static repository structure. No source code was executed.
 - `src/analyze/summary.ts` imports `../repo/walk`, `./detectStack`, `./env`, `./health`, `./imports`, `./packageManager`, `./scripts`, `./tsconfig`, `./workflows`
 - `src/analyze/tsconfig.ts` imports `../repo/walk`
 - `src/analyze/workflows.ts` imports `../repo/walk`
-- `src/app.ts` imports `./analyze/summary`, `./generate/render`, `./generate/writeDocs`
+- `src/app.ts` imports `./analyze/summary`, `./generate/render`, `./generate/writeDocs`, `./github/auth`, `./github/prPublisher`, `./github/webhookSecurity`, `./repo/clone`
 - `src/generate/render.ts` imports `../analyze/summary`, `../repo/walk`
 - `src/generate/writeDocs.ts` imports `../analyze/summary`, `./render`
 - `src/index.ts` imports `./app`

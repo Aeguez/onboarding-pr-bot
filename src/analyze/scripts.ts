@@ -24,6 +24,7 @@ export async function readPackageJson(rootDir: string): Promise<PackageJsonFacts
     name?: string;
     version?: string;
     description?: string;
+    main?: string;
     scripts?: Record<string, string>;
     dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
@@ -33,6 +34,7 @@ export async function readPackageJson(rootDir: string): Promise<PackageJsonFacts
     name: parsed.name,
     version: parsed.version,
     description: parsed.description,
+    main: parsed.main,
     scripts: parsed.scripts ?? {},
     dependencies: parsed.dependencies ?? {},
     devDependencies: parsed.devDependencies ?? {},

@@ -144,6 +144,20 @@ app.get("/api/onboarding-preview", async (_req, res, next) => {
   }
 });
 
+app.post("/api/generate-local-docs", async (_req, res, next) => {
+  try {
+    const facts = await analyzeRepository(process.cwd());
+    const result = await writeGeneratedDocs(process.cwd(), facts);
+
+    res.status(201).json({
+      ok: true,
+      generatedFiles: result.files,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.get("/health", (_req, res) => res.status(200).send("ok"));
 
 app.use(
