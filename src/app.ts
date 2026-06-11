@@ -1,6 +1,6 @@
 import { rm } from "node:fs/promises";
 import { createInstallationAccessToken } from "./github/auth";
-import { publishOnboardingPullRequest } from "./github/prPublisher";
+import { docsBranchName, publishOnboardingPullRequest } from "./github/prPublisher";
 import { cloneRepositoryToTempDir } from "./repo/clone";
 import express from "express";
 import dotenv from "dotenv";
@@ -51,6 +51,16 @@ app.post("/api/webhook", async (req, res, next) => {
         ok: true,
         ignored: true,
         event,
+      });
+      return;
+    }
+
+    if (event === "push" && req.body.ref === `refs/heads/${docsBranchName}`) {
+      res.status(202).json({
+        ok: true,
+        ignored: true,
+        event,
+        reason: "Ignoring bot documentation branch push",
       });
       return;
     }

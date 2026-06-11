@@ -3,7 +3,7 @@ import { promisify } from "node:util";
 import { Octokit } from "octokit";
 
 const execFileAsync = promisify(execFile);
-const docsBranchName = "onboarding-pr-bot/docs";
+export const docsBranchName = "onboarding-pr-bot/docs";
 
 export type PublishOnboardingPullRequestOptions = {
   owner: string;
@@ -29,6 +29,7 @@ export async function publishOnboardingPullRequest(
   options: PublishOnboardingPullRequestOptions,
 ): Promise<PublishOnboardingPullRequestResult> {
   await configureGitAuthor(options.repoPath);
+  await fetchDocsBranchIfPresent(options.repoPath);
   await git(options.repoPath, ["checkout", "-B", docsBranchName]);
   await git(options.repoPath, ["add", ...options.files]);
 
@@ -76,6 +77,18 @@ export async function publishOnboardingPullRequest(
 async function configureGitAuthor(repoPath: string): Promise<void> {
   await git(repoPath, ["config", "user.name", "onboarding-pr-bot"]);
   await git(repoPath, ["config", "user.email", "onboarding-pr-bot@users.noreply.github.com"]);
+}
+
+async function fetchDocsBranchIfPresent(repoPath: string): Promise<void> {
+  try {
+    await git(repoPath, [
+      "fetch",
+      "origin",
+      `${docsBranchName}:refs/remotes/origin/${docsBranchName}`,
+    ]);
+  } catch {
+    // The first bot run will not have a remote docs branch yet.
+  }
 }
 
 async function hasStagedChanges(repoPath: string): Promise<boolean> {
