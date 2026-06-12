@@ -55,12 +55,13 @@ app.post("/api/webhook", async (req, res, next) => {
       return;
     }
 
-    if (event === "push" && req.body.ref === `refs/heads/${docsBranchName}`) {
+    const ignoredPushReason = getIgnoredPushReason(event, req.body);
+    if (ignoredPushReason) {
       res.status(202).json({
         ok: true,
         ignored: true,
         event,
-        reason: "Ignoring bot documentation branch push",
+        reason: ignoredPushReason,
       });
       return;
     }
@@ -108,6 +109,7 @@ app.post("/api/webhook", async (req, res, next) => {
       token,
       defaultBranch,
       files: result.files,
+      facts,
     });
 
     res.status(200).json({
@@ -134,6 +136,22 @@ app.post("/api/webhook", async (req, res, next) => {
 
 function isSupportedWebhookEvent(event: string): boolean {
   return event === "push" || event === "repository";
+}
+
+export function getIgnoredPushReason(event: string, body: { ref?: string; sender?: { type?: string; login?: string } }): string | null {
+  if (event !== "push") {
+    return null;
+  }
+
+  if (body.ref === `refs/heads/${docsBranchName}`) {
+    return "Ignoring bot documentation branch push";
+  }
+
+  if (body.sender?.type === "Bot" || body.sender?.login?.endsWith("[bot]")) {
+    return "Ignoring bot-authored push";
+  }
+
+  return null;
 }
 
 app.get("/api/analyze-local", async (_req, res, next) => {
