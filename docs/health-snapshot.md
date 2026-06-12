@@ -5,7 +5,7 @@ Generated from package metadata and configuration files.
 ## Scripts
 
 - Build script: present
-- Test script: missing or placeholder
+- Test script: present
 - Lint script: missing
 
 ## Repository Hygiene
@@ -19,9 +19,9 @@ Generated from package metadata and configuration files.
 ## README Quality
 
 - README: present
-- Length: 302 characters
+- Length: 310 characters
 - Mentions install: no
-- Mentions tests: no
+- Mentions tests: yes
 - Mentions environment variables: no
 
 ## CI
@@ -45,8 +45,6 @@ Generated from package metadata and configuration files.
 
 ### Health Notes
 
-- The test script is still the default npm placeholder.
 - No lint script was found.
 - README exists but appears short.
-- README does not mention how to run tests.
 - README does not mention required environment variables.
